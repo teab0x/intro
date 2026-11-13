@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leçon 2 : sélectionner du texte dans Word</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+:root{
+  --bg:#f4f6fa;--surface:#fff;--ink:#1b2433;--muted:#5a6578;--line:#d5dbe6;
+  --accent:#185abd;--hl:rgba(255,200,0,.28);--hlb:#e0a800;
+  --ok-bg:#e6f4ea;--ok-ink:#137333;--ok-line:#81c995;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161f;--surface:#1b212d;--ink:#e8ecf4;--muted:#9aa5ba;--line:#323b4d;
+    --accent:#7fb0ff;--hl:rgba(255,200,0,.22);--hlb:#ffd24a;
+    --ok-bg:rgba(52,168,83,.18);--ok-ink:#81c995;--ok-line:rgba(129,201,149,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161f;--surface:#1b212d;--ink:#e8ecf4;--muted:#9aa5ba;--line:#323b4d;
+  --accent:#7fb0ff;--hl:rgba(255,200,0,.22);--hlb:#ffd24a;
+  --ok-bg:rgba(52,168,83,.18);--ok-ink:#81c995;--ok-line:rgba(129,201,149,.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif}
+main{max-width:960px;margin:0 auto;padding:24px 18px 50px}
+
+header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+h1{font-size:clamp(1.6rem,3.5vw,2.2rem);line-height:1.15;margin:0}
+.score-pill{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 14px;font-weight:700;font-size:.95rem}
+
+/* Grille aérée des 7 boutons */
+.methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
+.m-btn{
+  font:inherit;text-align:left;background:var(--surface);color:var(--ink);
+  border:2px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;
+  display:flex;flex-direction:column;gap:4px;transition:background .12s,border-color .12s;
+}
+.m-btn:hover{background:var(--hl)}
+.m-btn[aria-pressed="true"]{background:var(--hl);border-color:var(--hlb)}
+.m-btn.mastered{border-color:var(--ok-line)}
+.m-btn.mastered[aria-pressed="false"]{background:var(--ok-bg)}
+.m-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.m-target{font-weight:700;font-size:1.02rem}
+.m-action{color:var(--muted);font-size:.9rem}
+
+.mini-boxes{display:inline-flex;gap:3px;flex-shrink:0}
+.mini-box{width:12px;height:12px;border:1.5px solid var(--muted);border-radius:3px;background:var(--surface)}
+.mini-box.filled{background:var(--ok-ink);border-color:var(--ok-ink)}
+
+/* Zone unique de leçon + test */
+.sandbox{
+  background:linear-gradient(0deg,var(--hl),var(--hl)),var(--surface);
+  border:3px solid var(--hlb);
+  border-radius:12px;
+  padding:20px;
+}
+
+.task-header{
+  background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--hlb);
+  border-radius:8px;padding:14px 16px;margin-bottom:16px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+}
+.task-header.completed{background:var(--ok-bg);border-color:var(--ok-line);border-left-color:var(--ok-ink)}
+.task-main{flex:1;min-width:240px}
+.task-title{font-size:1.25rem;font-weight:700;margin:0 0 4px}
+.task-desc{margin:0;font-size:1.02rem}
+.task-note{margin:6px 0 0;font-size:.88rem;color:var(--muted)}
+
+.big-checks{display:flex;align-items:center;gap:7px;background:var(--bg);padding:8px 12px;border-radius:8px;border:1px solid var(--line)}
+.big-box{
+  width:26px;height:26px;border:2px solid var(--muted);border-radius:6px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:1rem;color:#fff;background:var(--surface);
+  transition:transform .15s,background .15s;
+}
+.big-box.filled{background:var(--ok-ink);border-color:var(--ok-ink);transform:scale(1.06)}
+
+/* Feuille Word */
+.sheet{background:#fff;color:#1b2433;border:2px solid var(--hlb);border-radius:8px;display:grid;grid-template-columns:56px 1fr;overflow:hidden}
+.sheet-margin{background:#f4f6fa;border-right:1px dashed #cbd5e1;display:flex;flex-direction:column;justify-content:space-around;padding:14px 0;user-select:none}
+.m-line{text-align:center;font-size:.82rem;color:#5a6578;padding:6px 2px;cursor:pointer;border-radius:4px;margin:0 4px}
+.m-line:hover{background:var(--hl);color:#1b2433;font-weight:700}
+.sheet-body{padding:18px 22px;font-family:"Calibri","Segoe UI",sans-serif;font-size:1.12rem;line-height:1.7;outline:none}
+.sheet-body p{margin:0 0 12px}
+.sheet-body p:last-child{margin-bottom:0}
+.sheet-body::selection,.sheet-body *::selection{background:#b4d5fe;color:#000}
+
+.sb-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:14px}
+.sb-status{font-weight:700;font-size:.98rem}
+.sb-status.ok{color:var(--ok-ink)}
+.nav-btns{display:flex;gap:8px;align-items:center}
+.btn{font:inherit;font-size:.92rem;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 13px;cursor:pointer}
+.btn:hover:not([disabled]){border-color:var(--accent)}
+.btn[disabled]{opacity:.4;cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Leçon 2 : sélectionner du texte dans Word</h1>
+    <span class="score-pill" id="sbScore">0 / 7 validés</span>
+  </header>
+
+  <div class="methods" id="methods" role="group" aria-label="Les 7 techniques de sélection"></div>
+
+  <section class="sandbox" aria-live="polite">
+    <div class="task-header" id="chBanner">
+      <div class="task-main">
+        <h2 class="task-title" id="t"></h2>
+        <p class="task-desc" id="chTask"></p>
+        <p class="task-note" id="chNote" hidden></p>
+      </div>
+      <div class="big-checks" title="Réussis 3 fois pour valider">
+        <span class="big-box" id="box0"></span>
+        <span class="big-box" id="box1"></span>
+        <span class="big-box" id="box2"></span>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-margin" title="Marge gauche">
+        <div class="m-line" data-p="0">↖ L1</div>
+        <div class="m-line" data-p="1">↖ L2</div>
+        <div class="m-line" data-p="2">↖ L3</div>
+        <div class="m-line" data-p="3">↖ L4</div>
+      </div>
+      <div class="sheet-body" id="sheetBody" tabindex="0">
+        <p id="sp0">Le Corbeau et le Renard</p>
+        <p id="sp1">Maître Corbeau, sur un arbre perché, tenait en son bec un fromage.</p>
+        <p id="sp2">Maître Renard, par l’odeur alléché, lui tint à peu près ce langage : Hé ! bonjour, Monsieur du Corbeau.</p>
+        <p id="sp3">Apprenez que tout flatteur vit aux dépens de celui qui l’écoute.</p>
+      </div>
+    </div>
+
+    <div class="sb-foot">
+      <span class="sb-status" id="sbStatus">À toi de jouer !</span>
+      <div class="nav-btns">
+        <button class="btn" id="prev" type="button">← Précédent</button>
+        <button class="btn" id="next" type="button">Suivant →</button>
+        <button class="btn" id="sbReset" type="button">Recommencer</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+var M = [
+  {
+    n: "1. Placer le curseur",
+    shortAction: "1 clic",
+    task: "Fais 1 simple clic à 3 endroits différents dans le texte (sans surligner).",
+    note: ""
+  },
+  {
+    n: "2. Plusieurs mots",
+    shortAction: "Cliquer-glisser",
+    task: "Maintiens le clic gauche et glisse pour sélectionner 2 à 4 mots (3 fois).",
+    note: ""
+  },
+  {
+    n: "3. Un mot entier",
+    shortAction: "2 clics (Double-clic)",
+    task: "Fais un double-clic rapide sur 3 mots différents.",
+    note: ""
+  },
+  {
+    n: "4. Une phrase",
+    shortAction: "Ctrl + 1 clic",
+    task: "Maintiens la touche Ctrl enfoncée et clique sur une phrase (3 fois).",
+    note: "Astuce : Ctrl + Clic fonctionne dans Word (et dans cet exercice), mais pas sur les sites Web habituels."
+  },
+  {
+    n: "5. Une ligne",
+    shortAction: "1 clic dans la marge",
+    task: "Clique dans la marge gauche sur « ↖ L1 », « ↖ L2 », « ↖ L3 » ou « ↖ L4 » (3 fois).",
+    note: ""
+  },
+  {
+    n: "6. Un paragraphe",
+    shortAction: "3 clics (Triple-clic)",
+    task: "Fais un triple-clic rapide dans un paragraphe entier (3 fois).",
+    note: ""
+  },
+  {
+    n: "7. Tout le texte",
+    shortAction: "Ctrl + A",
+    task: "Clique dans la feuille puis appuie sur Ctrl + A pour tout sélectionner (3 fois).",
+    note: ""
+  }
+];
+
+var cur = 0;
+var counts = [0, 0, 0, 0, 0, 0, 0];
+var lastSignature = "";
+var autoAdvanceTimer = null;
+
+var methodsBox = document.getElementById("methods");
+var mBtns = [];
+
+M.forEach(function(m, k) {
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "m-btn";
+  b.setAttribute("aria-pressed", k === 0 ? "true" : "false");
+  b.innerHTML =
+    '<div class="m-top">' +
+      '<span class="m-target">' + m.n + '</span>' +
+      '<span class="mini-boxes" id="mb-' + k + '">' +
+        '<span class="mini-box"></span>' +
+        '<span class="mini-box"></span>' +
+        '<span class="mini-box"></span>' +
+      '</span>' +
+    '</div>' +
+    '<span class="m-action">' + m.shortAction + '</span>';
+  b.onclick = function() {
+    clearTimeout(autoAdvanceTimer);
+    show(k);
+  };
+  methodsBox.appendChild(b);
+  mBtns.push(b);
+});
+
+var t = document.getElementById("t"),
+    chBanner = document.getElementById("chBanner"),
+    chTask = document.getElementById("chTask"),
+    chNote = document.getElementById("chNote"),
+    sbStatus = document.getElementById("sbStatus"),
+    sbScore = document.getElementById("sbScore"),
+    prev = document.getElementById("prev"),
+    next = document.getElementById("next"),
+    sheetBody = document.getElementById("sheetBody");
+
+function updateProgressUI() {
+  var masteredCount = 0;
+  for (var idx = 0; idx < M.length; idx++) {
+    var c = counts[idx];
+    if (c >= 3) masteredCount++;
+    mBtns[idx].classList.toggle("mastered", c >= 3);
+    var miniBoxes = document.querySelectorAll("#mb-" + idx + " .mini-box");
+    miniBoxes.forEach(function(box, bi) {
+      box.classList.toggle("filled", bi < c);
+    });
+  }
+
+  var activeCount = counts[cur];
+  for (var j = 0; j < 3; j++) {
+    var bigBox = document.getElementById("box" + j);
+    var filled = j < activeCount;
+    bigBox.classList.toggle("filled", filled);
+    bigBox.textContent = filled ? "✓" : "";
+  }
+
+  chBanner.classList.toggle("completed", activeCount >= 3);
+  sbScore.textContent = masteredCount + " / " + M.length + " validés";
+}
+
+function show(k) {
+  cur = k;
+  lastSignature = "";
+  var m = M[k];
+
+  mBtns.forEach(function(b, j) { b.setAttribute("aria-pressed", j === k ? "true" : "false"); });
+  t.textContent = m.n + " — " + m.shortAction;
+  chTask.textContent = m.task;
+
+  if (m.note) {
+    chNote.textContent = m.note;
+    chNote.hidden = false;
+  } else {
+    chNote.hidden = true;
+  }
+
+  sbStatus.textContent = counts[k] >= 3
+    ? "✓ Validé (3/3) ! Choisis la méthode suivante."
+    : "Réussis le geste 3 fois (" + counts[k] + "/3) :";
+  sbStatus.classList.toggle("ok", counts[k] >= 3);
+
+  prev.disabled = k === 0;
+  next.disabled = k === M.length - 1;
+  updateProgressUI();
+}
+
+prev.onclick = function() { clearTimeout(autoAdvanceTimer); if (cur > 0) show(cur - 1); };
+next.onclick = function() { clearTimeout(autoAdvanceTimer); if (cur < M.length - 1) show(cur + 1); };
+
+function cleanStr(s) {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+var PARAGRAPHS = [
+  "Le Corbeau et le Renard",
+  "Maître Corbeau, sur un arbre perché, tenait en son bec un fromage.",
+  "Maître Renard, par l’odeur alléché, lui tint à peu près ce langage : Hé ! bonjour, Monsieur du Corbeau.",
+  "Apprenez que tout flatteur vit aux dépens de celui qui l’écoute."
+];
+
+var SENTENCES = [
+  "Le Corbeau et le Renard",
+  "Maître Corbeau, sur un arbre perché, tenait en son bec un fromage.",
+  "Maître Renard, par l’odeur alléché, lui tint à peu près ce langage : Hé ! bonjour, Monsieur du Corbeau.",
+  "Maître Renard, par l’odeur alléché, lui tint à peu près ce langage :",
+  "Hé ! bonjour, Monsieur du Corbeau.",
+  "Apprenez que tout flatteur vit aux dépens de celui qui l’écoute."
+];
+
+function recordSuccess(label) {
+  if (counts[cur] < 3) {
+    counts[cur]++;
+    updateProgressUI();
+
+    if (counts[cur] < 3) {
+      sbStatus.textContent = "✓ Bien joué (" + label + ") ! Encore " + (3 - counts[cur]) + " essai" + (3 - counts[cur] > 1 ? "s" : "") + ".";
+      sbStatus.classList.add("ok");
+    } else {
+      sbStatus.textContent = "🎉 Bravo ! Méthode validée (3/3) !";
+      sbStatus.classList.add("ok");
+      if (cur < M.length - 1) {
+        autoAdvanceTimer = setTimeout(function() {
+          show(cur + 1);
+        }, 1200);
+      }
+    }
+  }
+}
+
+function evaluateCurrentAction(usedMargin) {
+  var sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  var range = sel.getRangeAt(0);
+  if (!sheetBody.contains(range.commonAncestorContainer)) return;
+
+  var txt = cleanStr(sel.toString());
+  var sig = cur + "|" + (usedMargin ? "M" : "T") + "|" + range.startOffset + ":" + range.endOffset + ":" + txt;
+
+  // 1. Placer le curseur
+  if (cur === 0) {
+    if (txt === "" && sig !== lastSignature) {
+      lastSignature = sig;
+      recordSuccess("curseur placé");
+    } else if (txt !== "") {
+      sbStatus.textContent = "Fais juste 1 clic sans glisser la souris.";
+      sbStatus.classList.remove("ok");
+    }
+    return;
+  }
+
+  if (!txt) {
+    sbStatus.textContent = "Aucun texte sélectionné.";
+    sbStatus.classList.remove("ok");
+    return;
+  }
+
+  if (sig === lastSignature) return;
+
+  var words = txt.split(" ").filter(Boolean);
+  var allTxt = cleanStr(sheetBody.innerText);
+  var cleanWord = txt.replace(/^[.,;:!?«»"()]+|[.,;:!?«»"()]+$/g, "");
+  var matched = false;
+
+  switch (cur) {
+    case 1: // Cliquer-glisser (2 à 5 mots)
+      matched = !usedMargin && words.length >= 2 && words.length <= 5 && PARAGRAPHS.indexOf(txt) === -1;
+      break;
+    case 2: // Double-clic (1 mot)
+      matched = !usedMargin && cleanWord.split(" ").length === 1 && cleanWord.length >= 2 && /^[A-Za-zÀ-ÿœŒ’'-]+$/.test(cleanWord);
+      break;
+    case 3: // Ctrl + Clic (1 phrase)
+      matched = !usedMargin && SENTENCES.indexOf(txt) !== -1;
+      break;
+    case 4: // Clic dans la marge gauche (1 ligne)
+      matched = usedMargin && PARAGRAPHS.indexOf(txt) !== -1;
+      break;
+    case 5: // Triple-clic (1 paragraphe)
+      matched = PARAGRAPHS.indexOf(txt) !== -1;
+      break;
+    case 6: // Ctrl + A (tout le document)
+      matched = txt === allTxt;
+      break;
+  }
+
+  if (matched) {
+    lastSignature = sig;
+    recordSuccess("« " + (txt.length > 32 ? txt.slice(0, 32) + "…" : txt) + " »");
+  } else {
+    sbStatus.textContent = "Sélection : « " + (txt.length > 42 ? txt.slice(0, 42) + "…" : txt) + " » — essaie encore.";
+    sbStatus.classList.remove("ok");
+  }
+}
+
+// Simulation fiable du Ctrl + Clic sur une phrase
+sheetBody.addEventListener("click", function(ev) {
+  if (ev.ctrlKey || ev.metaKey) {
+    ev.preventDefault();
+    var p = ev.target.closest("p");
+    if (!p || !p.firstChild) return;
+
+    var textNode = p.firstChild;
+    var full = textNode.textContent;
+    var sel = window.getSelection();
+    var offset = (sel && sel.rangeCount > 0) ? sel.getRangeAt(0).startOffset : 0;
+
+    var start = 0;
+    var end = full.length;
+    var regex = /[.!?]+(?:\s+|$)/g;
+    var match;
+    while ((match = regex.exec(full)) !== null) {
+      var boundary = match.index + match[0].length;
+      if (offset <= boundary) {
+        end = boundary;
+        break;
+      }
+      start = boundary;
+    }
+
+    var r = document.createRange();
+    r.setStart(textNode, start);
+    r.setEnd(textNode, end);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    evaluateCurrentAction(false);
+  }
+});
+
+sheetBody.addEventListener("mouseup", function(ev) {
+  if (ev.ctrlKey || ev.metaKey) return;
+  setTimeout(function() { evaluateCurrentAction(false); }, 15);
+});
+
+sheetBody.addEventListener("keyup", function(ev) {
+  if (ev.key === "Shift" || ev.key.startsWith("Arrow")) {
+    evaluateCurrentAction(false);
+  }
+});
+
+// Clic dans la marge gauche
+document.querySelectorAll(".m-line").forEach(function(el) {
+  el.onclick = function() {
+    var p = document.getElementById("sp" + el.dataset.p);
+    if (!p) return;
+    var r = document.createRange();
+    r.selectNodeContents(p);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    evaluateCurrentAction(true);
+  };
+});
+
+// Support Ctrl + A
+sheetBody.addEventListener("keydown", function(ev) {
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "a") {
+    ev.preventDefault();
+    var r = document.createRange();
+    r.selectNodeContents(sheetBody);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    evaluateCurrentAction(false);
+  }
+});
+
+document.getElementById("sbReset").onclick = function() {
+  clearTimeout(autoAdvanceTimer);
+  counts = [0, 0, 0, 0, 0, 0, 0];
+  lastSignature = "";
+  window.getSelection().removeAllRanges();
+  show(0);
+};
+
+show(0);
+</script>
+</body>
+</html>
